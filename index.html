@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Calculadoras (Curva ABC e ROAS)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    nav {
+      margin-bottom: 20px;
+    }
+    button.nav-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    button.nav-btn:hover {
+      background-color: #0056b3;
+    }
+    .container {
+      background-color: #ffffff;
+      padding: 20px;
+      margin: 0 auto;
+      border-radius: 10px;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: none; /* Todos começam escondidos */
+    }
+    input {
+      padding: 8px;
+      margin: 5px 0;
+      font-size: 16px;
+      width: 200px;
+    }
+    button.action-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+    button.action-btn:hover {
+      background-color: #218838;
+    }
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      margin-top: 15px;
+      width: 100%;
+      max-width: 600px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .info {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Painel de Calculadoras</h1>
+  <nav>
+    <!-- Botões de navegação para cada calculadora -->
+    <button class="nav-btn" onclick="mostrarCalculadora('abcCalc')">Curva ABC</button>
+    <button class="nav-btn" onclick="mostrarCalculadora('roasCalc')">ROAS</button>
+  </nav>
+
+  <!-- CALCULADORA DE CURVA ABC -->
+  <div id="abcCalc" class="container">
+    <h2>Calculadora de Curva ABC</h2>
+    <p class="info">Insira manualmente os produtos e seus valores de vendas. Clique em "Calcular" para ver a Curva ABC.</p>
+
+    <!-- Input para quantidade de produtos -->
+    <label for="numProdutos">Quantos produtos?</label><br>
+    <input type="number" id="numProdutos" placeholder="Ex: 3" min="1" value="3"><br>
+    <button class="action-btn" onclick="gerarCamposABC()">Gerar Campos</button>
+
+    <!-- Área para inputs de produtos -->
+    <div id="listaProdutos"></div>
+
+    <!-- Botão de Calcular ABC -->
+    <button class="action-btn" onclick="calcularABC()">Calcular Curva ABC</button>
+
+    <!-- Resultado da ABC -->
+    <div id="resultadoABC" class="result"></div>
+  </div>
+
+  <!-- CALCULADORA DE ROAS -->
+  <div id="roasCalc" class="container">
+    <h2>Calculadora de Preço com ROAS</h2>
+    <p class="info">Insira o ROAS (%), o Preço Atual (R$) e a Porcentagem Gasta por Venda (%), depois clique em "Calcular".</p>
+
+    <label for="roasInput">ROAS (%)</label><br>
+    <input type="number" id="roasInput" placeholder="Ex: 500"><br>
+
+    <label for="precoInput">Preço Atual (R$)</label><br>
+    <input type="number" id="precoInput" placeholder="Ex: 500"><br>
+
+    <label for="pctGasto">Porcentagem Gasta por Venda (%)</label><br>
+    <input type="number" id="pctGasto" placeholder="Ex: 10"><br>
+
+    <button class="action-btn" onclick="calcularROAS()">Calcular</button>
+
+    <div id="resultadoROAS" class="result"></div>
+  </div>
+
+  <script>
+    // Função para exibir a calculadora selecionada e ocultar as outras
+    function mostrarCalculadora(calcId) {
+      // Oculta todas as .container
+      document.querySelectorAll('.container').forEach(div => {
+        div.style.display = 'none';
+      });
+      // Mostra a que foi solicitada
+      document.getElementById(calcId).style.display = 'block';
+    }
+
+    // Ao carregar a página, mostramos a Curva ABC por padrão
+    document.addEventListener("DOMContentLoaded", function() {
+      mostrarCalculadora('abcCalc');
+    });
+
+    //---------------------------------------------------------
+    // CALCULADORA DE CURVA ABC
+    //---------------------------------------------------------
+    function gerarCamposABC() {
+      const listaProdutosDiv = document.getElementById("listaProdutos");
+      listaProdutosDiv.innerHTML = ""; // limpa
+
+      const num = parseInt(document.getElementById("numProdutos").value) || 1;
+      
+      for(let i = 0; i < num; i++){
+        const produtoHTML = `
+          <div style="margin-top:20px;">
+            <label>Produto ${i+1}</label><br>
+            <input type="text" id="prodName_${i}" placeholder="Nome do Produto">
+            <input type="number" id="prodVal_${i}" placeholder="Valor Total de Vendas (R$)" min="0">
+          </div>
+        `;
+        listaProdutosDiv.insertAdjacentHTML('beforeend', produtoHTML);
+      }
+    }
+
+    function calcularABC() {
+      let num = parseInt(document.getElementById("numProdutos").value) || 1;
+      let dados = [];
+
+      // Coletar os dados
+      for(let i = 0; i < num; i++){
+        let nome = document.getElementById(prodName_${i}).value.trim() || Produto ${i+1};
+        let val = parseFloat(document.getElementById(prodVal_${i}).value) || 0;
+        dados.push({nome: nome, valor: val});
+      }
+
+      // Ordenar decrescente
+      dados.sort((a, b) => b.valor - a.valor);
+
+      // Calcular total
+      let total = dados.reduce((sum, item) => sum + item.valor, 0);
+      if(total === 0){
+        document.getElementById("resultadoABC").innerHTML = "O total de vendas é zero. Não há como calcular a Curva ABC.";
+        return;
+      }
+
+      // Calcular % acumulada e Categoria
+      let acumulado = 0;
+      for(let i=0; i<dados.length; i++){
+        acumulado += dados[i].valor;
+        let percAcum = (acumulado / total) * 100;
+        dados[i].percAcumulado = percAcum.toFixed(2);
+
+        if(percAcum <= 80){
+          dados[i].categoria = "A";
+        } else if(percAcum <= 95){
+          dados[i].categoria = "B";
+        } else {
+          dados[i].categoria = "C";
+        }
+      }
+
+      // Montar tabela em HTML
+      let tabela = `
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Valor de Vendas (R$)</th>
+              <th>% Acumulada</th>
+              <th>Categoria</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      dados.forEach(item => {
+        tabela += `
+          <tr>
+            <td>${item.nome}</td>
+            <td>${item.valor.toFixed(2)}</td>
+            <td>${item.percAcumulado}%</td>
+            <td>${item.categoria}</td>
+          </tr>
+        `;
+      });
+      tabela += </tbody></table>;
+
+      document.getElementById("resultadoABC").innerHTML = tabela;
+    }
+
+    //---------------------------------------------------------
+    // CALCULADORA DE ROAS
+    //---------------------------------------------------------
+    function calcularROAS() {
+      let roas = parseFloat(document.getElementById("roasInput").value);
+      let preco = parseFloat(document.getElementById("precoInput").value);
+      let pctGasto = parseFloat(document.getElementById("pctGasto").value);
+      
+      if(isNaN(roas) || isNaN(preco) || roas <= 0 || preco <= 0){
+        document.getElementById("resultadoROAS").innerText = "Por favor, insira valores válidos para ROAS e Preço.";
+        return;
+      }
+
+      // Fórmula: novoPreco = preco / (1 - (100 / (roas + 100)))
+      let novoPreco = preco / (1 - (100 / (roas + 100)));
+
+      let msg = "Novo Preço: R$ " + novoPreco.toFixed(2);
+
+      if(!isNaN(pctGasto) && pctGasto > 0){
+        let valorGasto = novoPreco * (pctGasto / 100);
+        msg += "\nValor Gasto por Venda: R$ " + valorGasto.toFixed(2) + " (" + pctGasto.toFixed(2) + "%)";
+      }
+
+      document.getElementById("resultadoROAS").innerText = msg;
+    }
+  </script>
+</body>
+</html>
