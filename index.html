@@ -1,105 +1,242 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calculadora de Curva ABC</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Curva ABC com Tabela Detalhada</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    textarea { width: 100%; height: 120px; margin-bottom: 10px; }
-    button { margin-right: 10px; padding: 8px 16px; }
-    pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
-    canvas { margin-top: 30px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      flex: 1;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #999;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #fff200;
+    }
+
+    .right {
+      text-align: right;
+    }
   </style>
 </head>
 <body>
-  <h1>Calculadora de Curva ABC</h1>
-  <textarea id="input" placeholder="Produto A,100\nProduto B,50\nProduto C,30"></textarea>
-  <br/>
-  <button onclick="calcular()">Calcular</button>
-  <button onclick="exportarCSV()">Exportar CSV</button>
-  <pre id="resultado"></pre>
-  <canvas id="grafico" width="600" height="300"></canvas>
+  <div class="container">
+    <h1>Curva ABC - Tabela Detalhada</h1>
+    <div class="form-group">
+      <input type="text" id="produto" placeholder="Nome do Produto">
+      <input type="number" id="valor" placeholder="Valor Total de Vendas (R$)">
+      <button onclick="adicionarProduto()">Adicionar</button>
+    </div>
 
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Valor Total de Vendas</th>
+          <th>Valor Acumulado de Vendas</th>
+          <th>Porcentagem Acumulada de Vendas</th>
+          <th>Categoria</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  <canvas id="grafico" height="300" style="margin-top: 40px;"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    let classificadosGlobal = [];
+    let produtos = [];
 
-    function calcular() {
-      const input = document.getElementById('input').value.trim();
-      const linhas = input.split('\\n');
-      const itens = [];
+    function adicionarProduto() {
+      const nome = document.getElementById('produto').value.trim();
+      const valor = parseFloat(document.getElementById('valor').value);
 
-      try {
-        linhas.forEach(linha => {
-          const [nome, valor] = linha.split(',');
-          itens.push({ nome: nome.trim(), valor: parseFloat(valor) });
-        });
-
-        const total = itens.reduce((soma, item) => soma + item.valor, 0);
-        const ordenados = [...itens].sort((a, b) => b.valor - a.valor);
-
-        let acumulado = 0;
-        const classificados = ordenados.map(item => {
-          acumulado += item.valor;
-          const percentual = (acumulado / total) * 100;
-          let categoria = 'C';
-          if (percentual <= 80) categoria = 'A';
-          else if (percentual <= 95) categoria = 'B';
-          return { ...item, categoria };
-        });
-
-        classificadosGlobal = classificados;
-
-        const resultado = classificados.map(i => ${i.nome}: ${i.valor.toFixed(2)} - ${i.categoria}).join('\\n');
-        document.getElementById('resultado').textContent = resultado;
-
-        renderizarGrafico(classificados);
-      } catch (e) {
-        document.getElementById('resultado').textContent = 'Erro: Verifique o formato dos dados.';
+      if (!nome || isNaN(valor)) {
+        alert('Preencha corretamente o nome e valor.');
+        return;
       }
+
+      produtos.push({ nome, valor });
+      document.getElementById('produto').value = '';
+      document.getElementById('valor').value = '';
+      atualizarTabela();
     }
 
-    function exportarCSV() {
-      if (!classificadosGlobal.length) return;
-      const cabecalho = 'Nome,Valor,Categoria';
-      const linhas = classificadosGlobal.map(i => ${i.nome},${i.valor},${i.categoria});
-      const csv = [cabecalho, ...linhas].join('\\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'curva_abc.csv';
-      link.click();
-    }
+    function atualizarTabela() {
+      const total = produtos.reduce((s, p) => s + p.valor, 0);
+      const ordenados = [...produtos].sort((a, b) => b.valor - a.valor);
 
-    function renderizarGrafico(dados) {
+      let acumulado = 0;
+      const resultado = ordenados.map(p => {
+        acumulado += p.valor;
+        const percentual = (acumulado / total) * 100;
+        let categoria = 'C';
+        if (percentual <= 80) categoria = 'A';
+        else if (percentual <= 95) categoria = 'B';
+        return {
+          ...p,
+          acumulado,
+          percentual: percentual.toFixed(0) + '%',
+          categoria
+        };
+      });
+
+      const tbody = document.querySelector('#tabela tbody');
+      tbody.innerHTML = '';
+      resultado.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.nome}</td>
+          <td class="right">R$ ${p.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+          <td class="right">R$ ${p.acumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+          <td>${p.percentual}</td>
+          <td>${p.categoria}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  
+    let chart;
+
+    function desenharGrafico(dados) {
       const ctx = document.getElementById('grafico').getContext('2d');
-      if (window.graficoABC) window.graficoABC.destroy();
+      if (chart) chart.destroy();
 
-      window.graficoABC = new Chart(ctx, {
+      chart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: dados.map(d => d.nome),
+          labels: dados.map(p => p.nome),
           datasets: [{
-            label: 'Valor',
-            data: dados.map(d => d.valor),
-            backgroundColor: dados.map(d => 
-              d.categoria === 'A' ? '#4caf50' : d.categoria === 'B' ? '#ff9800' : '#f44336'
+            label: 'Total de Vendas por Produto (R$)',
+            data: dados.map(p => p.valor),
+            backgroundColor: dados.map(p =>
+              p.categoria === 'A' ? '#4caf50' : p.categoria === 'B' ? '#ff9800' : '#f44336'
             )
           }]
         },
         options: {
-          responsive: true,
-          plugins: {
-            tooltip: { mode: 'index', intersect: false }
+          indexAxis: 'y',
+          
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Distribuição de Vendas por Produto',
+            font: { size: 18 }
           },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ' R$ ' + context.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+    
           scales: {
-            y: { beginAtZero: true }
+            x: { beginAtZero: true }
           }
         }
       });
     }
+
+    // Atualiza tabela e desenha o gráfico
+    function atualizarTabela() {
+      const total = produtos.reduce((s, p) => s + p.valor, 0);
+      const ordenados = [...produtos].sort((a, b) => b.valor - a.valor);
+
+      let acumulado = 0;
+      const resultado = ordenados.map(p => {
+        acumulado += p.valor;
+        const percentual = (acumulado / total) * 100;
+        let categoria = 'C';
+        if (percentual <= 80) categoria = 'A';
+        else if (percentual <= 95) categoria = 'B';
+        return {
+          ...p,
+          acumulado,
+          percentual: percentual.toFixed(0) + '%',
+          categoria
+        };
+      });
+
+      const tbody = document.querySelector('#tabela tbody');
+      tbody.innerHTML = '';
+      resultado.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.nome}</td>
+          <td class="right">R$ ${p.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+          <td class="right">R$ ${p.acumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+          <td>${p.percentual}</td>
+          <td>${p.categoria}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      desenharGrafico(resultado);
+    }
   </script>
 </body>
+</html>
+
 </html>
