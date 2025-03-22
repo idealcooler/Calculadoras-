@@ -61,6 +61,7 @@
     .result {
       margin-top: 20px;
       font-weight: bold;
+      white-space: pre-line; /* para permitir quebra de linha em \n */
     }
     table {
       margin: 0 auto;
@@ -98,7 +99,7 @@
   <!-- CALCULADORA DE CURVA ABC -->
   <div id="abcCalc" class="container">
     <h2>Calculadora de Curva ABC</h2>
-    <p class="info">Insira manualmente os produtos e seus valores de vendas. Clique em "Calcular" para ver a Curva ABC.</p>
+    <p class="info">Insira manualmente os produtos e valores de vendas. Clique em "Calcular" para gerar a classificação ABC.</p>
 
     <!-- Input para quantidade de produtos -->
     <label for="numProdutos">Quantos produtos?</label><br>
@@ -118,7 +119,7 @@
   <!-- CALCULADORA DE ROAS -->
   <div id="roasCalc" class="container">
     <h2>Calculadora de Preço com ROAS</h2>
-    <p class="info">Insira o ROAS (%), o Preço Atual (R$) e a Porcentagem Gasta por Venda (%), depois clique em "Calcular".</p>
+    <p class="info">Insira ROAS (%), Preço Atual (R$) e Porcentagem Gasta por Venda (%). Depois, clique em "Calcular".</p>
 
     <label for="roasInput">ROAS (%)</label><br>
     <input type="number" id="roasInput" placeholder="Ex: 500"><br>
@@ -135,17 +136,17 @@
   </div>
 
   <script>
-    // Função para exibir a calculadora selecionada e ocultar as outras
+    // Mostra somente a div desejada e esconde as outras
     function mostrarCalculadora(calcId) {
-      // Oculta todas as .container
+      // Esconde todas as containers
       document.querySelectorAll('.container').forEach(div => {
         div.style.display = 'none';
       });
-      // Mostra a que foi solicitada
+      // Mostra somente a escolhida
       document.getElementById(calcId).style.display = 'block';
     }
 
-    // Ao carregar a página, mostramos a Curva ABC por padrão
+    // Ao carregar a página, exibe a Curva ABC por padrão
     document.addEventListener("DOMContentLoaded", function() {
       mostrarCalculadora('abcCalc');
     });
