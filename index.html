@@ -47,25 +47,7 @@ function buscarMesSelecionado() {
   }
 }
 
-
 window.onload = () => {
-  const mesSalvo = localStorage.getItem("mesSelecionado");
-  const input = document.getElementById("mesSelecionado");
-  const hoje = new Date();
-  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-  input.value = mesSalvo || defaultMes;
-
-  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
-    .then(res => res.json())
-    .then(produtosAPI => {
-      produtos = produtosAPI;
-      localStorage.setItem("produtosABC", JSON.stringify(produtos));
-      atualizarTabela();
-    })
-    .catch(err => {
-      console.error("Erro ao buscar dados:", err);
-    });
-
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -119,6 +101,34 @@ function limparDados() {
     atualizarTabela();
   }
 }
+
+function buscarMesSelecionado() {
+  const input = document.getElementById("mesSelecionado");
+  const mes = input.value;
+  if (!mes) return;
+
+  localStorage.setItem("mesSelecionado", mes);
+  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${mes}`)
+    .then(res => res.json())
+    .then(produtosAPI => {
+      produtos = produtosAPI;
+      localStorage.setItem("produtosABC", JSON.stringify(produtos));
+      atualizarTabela();
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+      alert("Não foi possível carregar os dados da loja. Verifique a conexão.");
+    });
+}
+
+window.onload = () => {
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+  buscarMesSelecionado();
+};
 </script>
 
 <style>
@@ -150,6 +160,7 @@ function limparDados() {
 <option value="C">Curva C</option>
 </select>
 </div>
+
 <div class="form-group">
 <input id="produto" placeholder="Nome do Produto" type="text"/>
 <input id="unitarioProduto" placeholder="Valor Unitário (R$)" type="number"/>
@@ -164,7 +175,7 @@ function limparDados() {
 <th>Valor Unitário</th>
 <th>Valor Total</th>
 <th>Unidades</th>
-
+<th>% Acumulado</th>
 <th>% Acumulado</th><th>Curva</th>
 </tr>
 </thead>
@@ -282,25 +293,7 @@ function limparDados() {
     });
   }
 
-  
-window.onload = () => {
-  const mesSalvo = localStorage.getItem("mesSelecionado");
-  const input = document.getElementById("mesSelecionado");
-  const hoje = new Date();
-  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-  input.value = mesSalvo || defaultMes;
-
-  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
-    .then(res => res.json())
-    .then(produtosAPI => {
-      produtos = produtosAPI;
-      localStorage.setItem("produtosABC", JSON.stringify(produtos));
-      atualizarTabela();
-    })
-    .catch(err => {
-      console.error("Erro ao buscar dados:", err);
-    });
-
+  window.onload = () => {
     if (produtos.length > 0) atualizarTabela();
   };
 
@@ -345,25 +338,7 @@ function buscarMesSelecionado() {
   }
 }
 
-
 window.onload = () => {
-  const mesSalvo = localStorage.getItem("mesSelecionado");
-  const input = document.getElementById("mesSelecionado");
-  const hoje = new Date();
-  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-  input.value = mesSalvo || defaultMes;
-
-  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
-    .then(res => res.json())
-    .then(produtosAPI => {
-      produtos = produtosAPI;
-      localStorage.setItem("produtosABC", JSON.stringify(produtos));
-      atualizarTabela();
-    })
-    .catch(err => {
-      console.error("Erro ao buscar dados:", err);
-    });
-
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -417,6 +392,34 @@ function limparDados() {
     atualizarTabela();
   }
 }
+
+function buscarMesSelecionado() {
+  const input = document.getElementById("mesSelecionado");
+  const mes = input.value;
+  if (!mes) return;
+
+  localStorage.setItem("mesSelecionado", mes);
+  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${mes}`)
+    .then(res => res.json())
+    .then(produtosAPI => {
+      produtos = produtosAPI;
+      localStorage.setItem("produtosABC", JSON.stringify(produtos));
+      atualizarTabela();
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+      alert("Não foi possível carregar os dados da loja. Verifique a conexão.");
+    });
+}
+
+window.onload = () => {
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+  buscarMesSelecionado();
+};
 </script>
 
 </body>
