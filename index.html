@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Curva ABC Simplificada</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curva ABC Simplificada</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
 function exportarExcel() {
   const table = document.getElementById("tabela");
   const wb = XLSX.utils.table_to_book(table, { sheet: "Curva ABC" });
@@ -19,8 +20,8 @@ function exportarPDF() {
   doc.save("curva_abc.pdf");
 }
 
-function filtrarCategoria() {
-  const filtro = document.getElementById("filtroCategoria").value;
+function filtrarCurva() {
+  const filtro = document.getElementById("filtroCurva").value;
   const linhas = document.querySelectorAll("#tabela tbody tr");
   linhas.forEach(linha => {
     const cat = linha.children[6].textContent.trim();
@@ -28,53 +29,53 @@ function filtrarCategoria() {
   });
 }
 
-async function carregarPedidosLojaIntegrada() {
-  const email = "4744060a5e00f1f98672";
-  const key = "9f43d27a446caf695bc7";
-  const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-
-  let url = `https://api.awsli.com.br/v1/pedido/?data_criacao__gte=${primeiroDia}&data_criacao__lte=${ultimoDia}&limit=100`;
-  let headers = {
-    "Content-Type": "application/json",
-    "X-API-EMAIL": email,
-    "X-API-KEY": key
-  };
-
-  let todosPedidos = [];
-  while (url) {
-    const res = await fetch(url, { headers });
-    const data = await res.json();
-    todosPedidos.push(...data.objects);
-    url = data.meta?.next;
+function buscarMesSelecionado() {
+  const input = document.getElementById("mesSelecionado");
+  const mes = input.value;
+  if (mes) {
+    localStorage.setItem("mesSelecionado", mes);
+    fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${mes}`)
+      .then(res => res.json())
+      .then(produtosAPI => {
+        produtos = produtosAPI;
+        localStorage.setItem("produtosABC", JSON.stringify(produtos));
+        atualizarTabela();
+      })
+      .catch(err => {
+        console.error("Erro ao buscar dados:", err);
+      });
   }
-
-  let mapa = {};
-  todosPedidos.forEach(pedido => {
-    pedido.itens.forEach(item => {
-      const nome = item.produto.nome;
-      const quantidade = item.quantidade;
-      const valor_unitario = parseFloat(item.preco);
-      if (!mapa[nome]) {
-        mapa[nome] = { nome, unidades: 0, unitario: valor_unitario };
-      }
-      mapa[nome].unidades += quantidade;
-    });
-  });
-
-  produtos = Object.values(mapa);
-  localStorage.setItem("produtosABC", JSON.stringify(produtos));
-  atualizarTabela();
 }
 
 window.onload = () => {
-  carregarPedidosLojaIntegrada();
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+  buscarMesSelecionado();
 };
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
 </script>
-
-
-  <style>
+<style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; display: flex; justify-content: center; }
     .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 1000px; }
     h1 { text-align: center; margin-bottom: 20px; }
@@ -90,45 +91,41 @@ window.onload = () => {
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Calculadora de Curva ABC</h1>
-    
-    <div class="form-group">
-      <button onclick="exportarExcel()" style="background:#198754;">Exportar Excel</button>
-      <button onclick="exportarPDF()" style="background:#6c757d;">Exportar PDF</button>
-      <select id="filtroCategoria" onchange="filtrarCategoria()" style="padding:10px;border-radius:8px;">
-        <option value="">Todas as Categorias</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-      </select>
-    </div>
-    <div class="form-group">
+<div class="container">
+<h1>Calculadora de Curva ABC</h1>
+<div class="form-group">
+<input id="mesSelecionado" onchange="buscarMesSelecionado()" style="padding:10px;border-radius:8px;" type="month"/>
+<button onclick="exportarExcel()" style="background:#198754;">Exportar Excel</button>
+<button onclick="exportarPDF()" style="background:#6c757d;">Exportar PDF</button>
+<select id="filtroCurva" onchange="filtrarCurva()" style="padding:10px;border-radius:8px;">
+<option value="">Todas as Curvas</option>
+<option value="A">Curva A</option>
+<option value="B">Curva B</option>
+<option value="C">Curva C</option>
+</select>
+</div>
+<div class="form-group">
+<input id="produto" placeholder="Nome do Produto" type="text"/>
+<input id="unitarioProduto" placeholder="Valor Unitário (R$)" type="number"/>
+<input id="unidadesProduto" placeholder="Unidades Vendidas" type="number"/>
+<button onclick="adicionarProduto()">Adicionar</button>
+<button id="limpar" onclick="limparDados()">Limpar Dados</button>
+</div>
+<table id="tabela">
+<thead>
+<tr>
+<th>Produto</th>
+<th>Valor Unitário</th>
+<th>Valor Total</th>
+<th>Unidades</th>
 
-      <input type="text" id="produto" placeholder="Nome do Produto">
-      <input type="number" id="unitarioProduto" placeholder="Valor Unitário (R$)">
-      <input type="number" id="unidadesProduto" placeholder="Unidades Vendidas">
-      <button onclick="adicionarProduto()">Adicionar</button>
-      <button id="limpar" onclick="limparDados()">Limpar Dados</button>
-    </div>
-
-    <table id="tabela">
-      <thead>
-        <tr>
-          <th>Produto</th>
-          <th>Valor Unitário</th>
-          <th>Valor Total</th>
-          <th>Unidades</th>
-          <th>% Acumulado</th>
-          <th>% Acumulado</th><th>Categoria</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <canvas id="grafico" height="300"></canvas>
-  </div>
-
+<th>% Acumulado</th><th>Curva</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<canvas height="300" id="grafico"></canvas>
+</div>
 <script>
   let produtos = JSON.parse(localStorage.getItem("produtosABC")) || [];
   let chart;
@@ -175,17 +172,17 @@ window.onload = () => {
     ordenados.forEach((p) => {
       acumulado += p.valor;
       const percentualAcumulado = (acumulado / total) * 100;
-      let categoria = 'C';
-      if (percentualAcumulado <= 80) categoria = 'A';
-      else if (percentualAcumulado <= 95) categoria = 'B';
-      resultado.push({ ...p, percentual: percentualAcumulado.toFixed(0) + '%', categoria });
+      let curva = 'C';
+      if (percentualAcumulado <= 80) curva = 'A';
+      else if (percentualAcumulado <= 95) curva = 'B';
+      resultado.push({ ...p, percentual: percentualAcumulado.toFixed(0) + '%', curva });
     });
     
       const percentual = ((p.valor / total) * 100);
-      let categoria = 'C';
-      if (i < Math.ceil(ordenados.length * 0.2)) categoria = 'A';
-      else if (i < Math.ceil(ordenados.length * 0.5)) categoria = 'B';
-      resultado.push({ ...p, percentual: percentual.toFixed(0) + '%', categoria });
+      let curva = 'C';
+      if (i < Math.ceil(ordenados.length * 0.2)) curva = 'A';
+      else if (i < Math.ceil(ordenados.length * 0.5)) curva = 'B';
+      resultado.push({ ...p, percentual: percentual.toFixed(0) + '%', curva });
     });
 
     const tbody = document.querySelector("#tabela tbody");
@@ -198,7 +195,7 @@ window.onload = () => {
         <td>R$ ${p.valor.toFixed(2)}</td>
         <td>${p.unidades}</td>
         <td>${p.percentual}</td>
-        <td>${p.categoria}</td>
+        <td>${p.curva}</td>
       `;
       tbody.appendChild(row);
     });
@@ -218,7 +215,7 @@ window.onload = () => {
           label: "Vendas por Produto (R$)",
           data: dados.map(p => p.valor),
           backgroundColor: dados.map(p =>
-            p.categoria === 'A' ? '#4caf50' : p.categoria === 'B' ? '#ff9800' : '#f44336'
+            p.curva === 'A' ? '#4caf50' : p.curva === 'B' ? '#ff9800' : '#f44336'
           )
         }]
       },
@@ -257,8 +254,8 @@ function exportarPDF() {
   doc.save("curva_abc.pdf");
 }
 
-function filtrarCategoria() {
-  const filtro = document.getElementById("filtroCategoria").value;
+function filtrarCurva() {
+  const filtro = document.getElementById("filtroCurva").value;
   const linhas = document.querySelectorAll("#tabela tbody tr");
   linhas.forEach(linha => {
     const cat = linha.children[6].textContent.trim();
@@ -266,51 +263,51 @@ function filtrarCategoria() {
   });
 }
 
-async function carregarPedidosLojaIntegrada() {
-  const email = "4744060a5e00f1f98672";
-  const key = "9f43d27a446caf695bc7";
-  const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-
-  let url = `https://api.awsli.com.br/v1/pedido/?data_criacao__gte=${primeiroDia}&data_criacao__lte=${ultimoDia}&limit=100`;
-  let headers = {
-    "Content-Type": "application/json",
-    "X-API-EMAIL": email,
-    "X-API-KEY": key
-  };
-
-  let todosPedidos = [];
-  while (url) {
-    const res = await fetch(url, { headers });
-    const data = await res.json();
-    todosPedidos.push(...data.objects);
-    url = data.meta?.next;
+function buscarMesSelecionado() {
+  const input = document.getElementById("mesSelecionado");
+  const mes = input.value;
+  if (mes) {
+    localStorage.setItem("mesSelecionado", mes);
+    fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${mes}`)
+      .then(res => res.json())
+      .then(produtosAPI => {
+        produtos = produtosAPI;
+        localStorage.setItem("produtosABC", JSON.stringify(produtos));
+        atualizarTabela();
+      })
+      .catch(err => {
+        console.error("Erro ao buscar dados:", err);
+      });
   }
-
-  let mapa = {};
-  todosPedidos.forEach(pedido => {
-    pedido.itens.forEach(item => {
-      const nome = item.produto.nome;
-      const quantidade = item.quantidade;
-      const valor_unitario = parseFloat(item.preco);
-      if (!mapa[nome]) {
-        mapa[nome] = { nome, unidades: 0, unitario: valor_unitario };
-      }
-      mapa[nome].unidades += quantidade;
-    });
-  });
-
-  produtos = Object.values(mapa);
-  localStorage.setItem("produtosABC", JSON.stringify(produtos));
-  atualizarTabela();
 }
 
 window.onload = () => {
-  carregarPedidosLojaIntegrada();
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+  buscarMesSelecionado();
 };
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
 </script>
-
-
 </body>
 </html>
