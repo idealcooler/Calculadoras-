@@ -47,7 +47,25 @@ function buscarMesSelecionado() {
   }
 }
 
+
 window.onload = () => {
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+
+  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
+    .then(res => res.json())
+    .then(produtosAPI => {
+      produtos = produtosAPI;
+      localStorage.setItem("produtosABC", JSON.stringify(produtos));
+      atualizarTabela();
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+    });
+
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -74,7 +92,35 @@ function adicionarProduto() {
   document.getElementById("unidadesProduto").value = '';
   atualizarTabela();
 }
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
+
+function limparDados() {
+  if (confirm("Deseja realmente apagar todos os produtos salvos?")) {
+    produtos = [];
+    localStorage.removeItem("produtosABC");
+    atualizarTabela();
+  }
+}
 </script>
+
 <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; display: flex; justify-content: center; }
     .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 1000px; }
@@ -236,7 +282,25 @@ function adicionarProduto() {
     });
   }
 
-  window.onload = () => {
+  
+window.onload = () => {
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+
+  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
+    .then(res => res.json())
+    .then(produtosAPI => {
+      produtos = produtosAPI;
+      localStorage.setItem("produtosABC", JSON.stringify(produtos));
+      atualizarTabela();
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+    });
+
     if (produtos.length > 0) atualizarTabela();
   };
 
@@ -281,7 +345,25 @@ function buscarMesSelecionado() {
   }
 }
 
+
 window.onload = () => {
+  const mesSalvo = localStorage.getItem("mesSelecionado");
+  const input = document.getElementById("mesSelecionado");
+  const hoje = new Date();
+  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  input.value = mesSalvo || defaultMes;
+
+  fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${input.value}`)
+    .then(res => res.json())
+    .then(produtosAPI => {
+      produtos = produtosAPI;
+      localStorage.setItem("produtosABC", JSON.stringify(produtos));
+      atualizarTabela();
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados:", err);
+    });
+
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -308,6 +390,34 @@ function adicionarProduto() {
   document.getElementById("unidadesProduto").value = '';
   atualizarTabela();
 }
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
+
+function limparDados() {
+  if (confirm("Deseja realmente apagar todos os produtos salvos?")) {
+    produtos = [];
+    localStorage.removeItem("produtosABC");
+    atualizarTabela();
+  }
+}
 </script>
+
 </body>
 </html>
