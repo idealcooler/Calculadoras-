@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="pt-BR">
@@ -48,24 +47,7 @@ function buscarMesSelecionado() {
   }
 }
 
-
 window.onload = () => {
-  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
-    .then(res => res.json())
-    .then(produtosAPI => {
-      if (produtosAPI && produtosAPI.length > 0) {
-        produtos = produtosAPI;
-        localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
-      } else {
-        alert("Nenhum dado encontrado na Loja Integrada.");
-      }
-    })
-    .catch(err => {
-      console.error("Erro ao buscar todos os pedidos:", err);
-      alert("Erro ao buscar dados da API.");
-    });
-
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -92,7 +74,56 @@ function adicionarProduto() {
   document.getElementById("unidadesProduto").value = '';
   atualizarTabela();
 }
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
+
+function limparDados() {
+  if (confirm("Deseja apagar todos os produtos salvos?")) {
+    produtos = [];
+    localStorage.removeItem("produtosABC");
+    atualizarTabela();
+  }
+}
+
+window.onload = () => {
+  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
+    .then(res => res.json())
+    .then(produtosAPI => {
+      if (Array.isArray(produtosAPI) && produtosAPI.length > 0) {
+        produtos = produtosAPI;
+        localStorage.setItem("produtosABC", JSON.stringify(produtos));
+        atualizarTabela();
+        console.log("Dados carregados da API:", produtosAPI);
+      } else {
+        console.warn("Nenhum dado encontrado. Mostrando tela vazia.");
+        alert("Nenhum dado encontrado na Loja Integrada.");
+        produtos = [];
+        atualizarTabela();
+      }
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados da API:", err);
+      alert("Erro ao carregar dados da Loja Integrada.");
+    });
+};
 </script>
+
 <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; display: flex; justify-content: center; }
     .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 1000px; }
@@ -255,24 +286,7 @@ function adicionarProduto() {
     });
   }
 
-  
-window.onload = () => {
-  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
-    .then(res => res.json())
-    .then(produtosAPI => {
-      if (produtosAPI && produtosAPI.length > 0) {
-        produtos = produtosAPI;
-        localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
-      } else {
-        alert("Nenhum dado encontrado na Loja Integrada.");
-      }
-    })
-    .catch(err => {
-      console.error("Erro ao buscar todos os pedidos:", err);
-      alert("Erro ao buscar dados da API.");
-    });
-
+  window.onload = () => {
     if (produtos.length > 0) atualizarTabela();
   };
 
@@ -317,24 +331,7 @@ function buscarMesSelecionado() {
   }
 }
 
-
 window.onload = () => {
-  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
-    .then(res => res.json())
-    .then(produtosAPI => {
-      if (produtosAPI && produtosAPI.length > 0) {
-        produtos = produtosAPI;
-        localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
-      } else {
-        alert("Nenhum dado encontrado na Loja Integrada.");
-      }
-    })
-    .catch(err => {
-      console.error("Erro ao buscar todos os pedidos:", err);
-      alert("Erro ao buscar dados da API.");
-    });
-
   const mesSalvo = localStorage.getItem("mesSelecionado");
   const input = document.getElementById("mesSelecionado");
   const hoje = new Date();
@@ -361,6 +358,55 @@ function adicionarProduto() {
   document.getElementById("unidadesProduto").value = '';
   atualizarTabela();
 }
+
+function adicionarProduto() {
+  const nome = document.getElementById("produto").value.trim();
+  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
+  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+
+  if (!nome || isNaN(unitario) || isNaN(unidades)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  produtos.push({ nome, unitario, unidades });
+  localStorage.setItem("produtosABC", JSON.stringify(produtos));
+  document.getElementById("produto").value = '';
+  document.getElementById("unitarioProduto").value = '';
+  document.getElementById("unidadesProduto").value = '';
+  atualizarTabela();
+}
+
+function limparDados() {
+  if (confirm("Deseja apagar todos os produtos salvos?")) {
+    produtos = [];
+    localStorage.removeItem("produtosABC");
+    atualizarTabela();
+  }
+}
+
+window.onload = () => {
+  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
+    .then(res => res.json())
+    .then(produtosAPI => {
+      if (Array.isArray(produtosAPI) && produtosAPI.length > 0) {
+        produtos = produtosAPI;
+        localStorage.setItem("produtosABC", JSON.stringify(produtos));
+        atualizarTabela();
+        console.log("Dados carregados da API:", produtosAPI);
+      } else {
+        console.warn("Nenhum dado encontrado. Mostrando tela vazia.");
+        alert("Nenhum dado encontrado na Loja Integrada.");
+        produtos = [];
+        atualizarTabela();
+      }
+    })
+    .catch(err => {
+      console.error("Erro ao buscar dados da API:", err);
+      alert("Erro ao carregar dados da Loja Integrada.");
+    });
+};
 </script>
+
 </body>
 </html>
