@@ -1,83 +1,112 @@
-
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Curva ABC Simplificada</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js">
-function exportarExcel() {
-  const table = document.getElementById("tabela");
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Curva ABC" });
-  XLSX.writeFile(wb, "curva_abc.xlsx");
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Curva ABC</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 20px;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; }
+    input, button {
+      padding: 10px; margin: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: #eee;
+    }
+    button {
+      cursor: pointer;
+    }
+    .btn-azul { background: #007bff; color: white; border: none; }
+    .btn-vermelho { background: #dc3545; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Curva ABC</h1>
+    <div style="margin-bottom: 10px;">
+      <input type="text" id="produto" placeholder="Nome do Produto" />
+      <input type="number" id="unitarioProduto" placeholder="Valor Unitário (R$)" />
+      <input type="number" id="unidadesProduto" placeholder="Unidades Vendidas" />
+      <button onclick="adicionarProduto()" class="btn-azul">Adicionar</button>
+      <button onclick="limparDados()" class="btn-vermelho">Limpar Dados</button>
+    </div>
 
-function exportarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.text("Curva ABC", 14, 16);
-  doc.autoTable({ html: '#tabela', startY: 20 });
-  doc.save("curva_abc.pdf");
-}
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Valor Unitário</th>
+          <th>Valor Total</th>
+          <th>Unidades</th>
+          <th>% Acumulado</th>
+          <th>Curva</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-function filtrarCurva() {
-  const filtro = document.getElementById("filtroCurva").value;
-  const linhas = document.querySelectorAll("#tabela tbody tr");
-  linhas.forEach(linha => {
-    const cat = linha.children[6].textContent.trim();
-    linha.style.display = (filtro === "" || cat === filtro) ? "" : "none";
-  });
-}
-
-function buscarMesSelecionado() {
-  const input = document.getElementById("mesSelecionado");
-  const mes = input.value;
-  if (mes) {
-    localStorage.setItem("mesSelecionado", mes);
-    fetch(`https://curva-abc-proxy.onrender.com/api/pedidos?mes=${mes}`)
-      .then(res => res.json())
-      .then(produtosAPI => {
-        produtos = produtosAPI;
-        localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
-      })
-      .catch(err => {
-        console.error("Erro ao buscar dados:", err);
-      });
-  }
-}
-
-window.onload = () => {
-  const mesSalvo = localStorage.getItem("mesSelecionado");
-  const input = document.getElementById("mesSelecionado");
-  const hoje = new Date();
-  const defaultMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-  input.value = mesSalvo || defaultMes;
-  buscarMesSelecionado();
-};
-
-function adicionarProduto() {
-  const nome = document.getElementById("produto").value.trim();
-  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
-  const unidades = parseInt(document.getElementById("unidadesProduto").value);
-
-  if (!nome || isNaN(unitario) || isNaN(unidades)) {
-    alert("Preencha todos os campos corretamente.");
-    return;
-  }
-
-  produtos.push({ nome, unitario, unidades });
-  localStorage.setItem("produtosABC", JSON.stringify(produtos));
-
-  document.getElementById("produto").value = '';
-  document.getElementById("unitarioProduto").value = '';
-  document.getElementById("unidadesProduto").value = '';
-  atualizarTabela();
-}
-</script>
 <script>
 let produtos = [];
+
+function atualizarTabela() {
+  const corpo = document.querySelector("tbody");
+  corpo.innerHTML = "";
+
+  const lista = produtos.map(p => ({
+    ...p,
+    total: p.unitario * p.unidades
+  })).sort((a, b) => b.total - a.total);
+
+  const totalGeral = lista.reduce((acc, p) => acc + p.total, 0);
+  let acumulado = 0;
+
+  lista.forEach(p => {
+    acumulado += p.total;
+    p.percentual = `${Math.round((acumulado / totalGeral) * 100)}%`;
+    const percentualNum = (acumulado / totalGeral) * 100;
+    if (percentualNum <= 80) p.categoria = "A";
+    else if (percentualNum <= 95) p.categoria = "B";
+    else p.categoria = "C";
+  });
+
+  lista.forEach(p => {
+    const linha = document.createElement("tr");
+    linha.innerHTML = `
+      <td>${p.nome}</td>
+      <td>R$ ${p.unitario.toFixed(2)}</td>
+      <td>R$ ${(p.unitario * p.unidades).toFixed(2)}</td>
+      <td>${p.unidades}</td>
+      <td>${p.percentual}</td>
+      <td>${p.categoria}</td>
+    `;
+    corpo.appendChild(linha);
+  });
+}
 
 function adicionarProduto() {
   const nome = document.getElementById("produto").value.trim();
@@ -112,16 +141,15 @@ window.onload = () => {
       if (Array.isArray(produtosAPI) && produtosAPI.length > 0) {
         produtos = produtosAPI;
         localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
       } else {
-        alert("Nenhum dado encontrado na Loja Integrada.");
         produtos = [];
-        atualizarTabela();
       }
+      atualizarTabela();
     })
     .catch(err => {
-      console.error("Erro ao buscar dados:", err);
-      alert("Erro ao carregar dados da API.");
+      console.error("Erro ao buscar dados da API:", err);
     });
 }
 </script>
+</body>
+</html>
