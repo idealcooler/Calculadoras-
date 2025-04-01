@@ -1,156 +1,238 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculadora de Curva ABC</title>
+  <meta charset="UTF-8">
+  <title>Calculadora de Comissão</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0; padding: 20px;
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
     }
+
     .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
+      background: #fff;
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 1000px;
+      width: 100%;
     }
-    h1 { text-align: center; }
-    input, button {
-      padding: 10px; margin: 5px;
+
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .controls select,
+    .controls button {
+      padding: 10px;
+      font-size: 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
+
     table {
       width: 100%;
-      margin-top: 20px;
       border-collapse: collapse;
+      margin-bottom: 20px;
     }
+
     th, td {
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ddd;
       text-align: center;
     }
+
     th {
-      background: #eee;
+      background-color: #0033ff;
+      color: white;
     }
-    button {
-      cursor: pointer;
+
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      text-align: right;
     }
-    .btn-azul { background: #007bff; color: white; border: none; }
-    .btn-vermelho { background: #dc3545; color: white; border: none; }
+
+    tfoot td {
+      font-weight: bold;
+      background-color: #f0f0f0;
+    }
+
+    .bonus {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .progress-container {
+      margin-top: 20px;
+      background-color: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 25px;
+      background-color: #4caf50;
+      width: 0%;
+      color: #fff;
+      text-align: center;
+      line-height: 25px;
+      transition: width 0.5s;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Calculadora de Curva ABC</h1>
-    <div style="margin-bottom: 10px;">
-      <input type="text" id="produto" placeholder="Nome do Produto" />
-      <input type="number" id="unitarioProduto" placeholder="Valor Unitário (R$)" />
-      <input type="number" id="unidadesProduto" placeholder="Unidades Vendidas" />
-      <button onclick="adicionarProduto()" class="btn-azul">Adicionar</button>
-      <button onclick="limparDados()" class="btn-vermelho">Limpar Dados</button>
+    <h2>Vendas Balcão - Meta: R$ 100.000</h2>
+    <div class="controls">
+      <select id="mesSelecionado" onchange="carregarMes()"></select>
+      <div>
+        <button onclick="novaLinha()">+ Nova Venda</button>
+        <button onclick="if(confirm('Tem certeza que deseja zerar os dados deste mês?')) zerarMes()">Zerar Mês Atual</button>
+      </div>
     </div>
-
-    <table>
+    <table id="comissaoTable">
       <thead>
         <tr>
-          <th>Produto</th>
-          <th>Valor Unitário</th>
-          <th>Valor Total</th>
-          <th>Unidades</th>
-          <th>% Acumulado</th>
-          <th>Curva</th>
+          <th>Valor Fornecedor (R$)</th>
+          <th>Valor Pago pelo Cliente (R$)</th>
+          <th>Meio de Pagamento</th>
+          <th>Margem de Lucro (R$)</th>
+          <th>Comissão Total (5%)</th>
         </tr>
       </thead>
       <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4">Comissão Total Acumulada:</td>
+          <td id="comissaoTotal">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td colspan="4">Comissão por Vendedor:</td>
+          <td id="comissaoDividida">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td colspan="5" id="bonusInfo" class="bonus">Ao bater a meta de R$ 100.000 em vendas, cada vendedor ganha um bônus extra de R$ 500,00! Vamos juntos alcançar esse objetivo!</td>
+        </tr>
+        <tr>
+          <td colspan="5">
+            <div class="progress-container">
+              <div id="progressBar" class="progress-bar">0%</div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 
-<script>
-let produtos = [];
+  <script>
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const hoje = new Date();
+    const mesAtual = ${hoje.getFullYear()}-${hoje.getMonth() + 1};
 
-function atualizarTabela() {
-  const corpo = document.querySelector("tbody");
-  corpo.innerHTML = "";
+    const selectMes = document.getElementById('mesSelecionado');
+    for (let i = 0; i < 12; i++) {
+      const mesRef = ${hoje.getFullYear()}-${i + 1};
+      const opt = document.createElement('option');
+      opt.value = mesRef;
+      opt.textContent = ${meses[i]} ${hoje.getFullYear()};
+      if (mesRef === mesAtual) opt.selected = true;
+      selectMes.appendChild(opt);
+    }
 
-  const lista = produtos.map(p => ({
-    ...p,
-    total: p.unitario * p.unidades
-  })).sort((a, b) => b.total - a.total);
+    function salvarMes() {
+      const dados = Array.from(document.querySelectorAll('#comissaoTable tbody tr')).map(row => ({
+        fornecedor: row.cells[0].children[0].value,
+        cliente: row.cells[1].children[0].value,
+        meio: row.cells[2].children[0].value
+      }));
+      localStorage.setItem(comissao-${selectMes.value}, JSON.stringify(dados));
+    }
 
-  const totalGeral = lista.reduce((acc, p) => acc + p.total, 0);
-  let acumulado = 0;
+    function carregarMes() {
+      const tbody = document.querySelector('#comissaoTable tbody');
+      tbody.innerHTML = '';
+      const dados = JSON.parse(localStorage.getItem(comissao-${selectMes.value})) || [];
+      dados.forEach(dado => novaLinha(dado));
+      calcular();
+    }
 
-  lista.forEach(p => {
-    acumulado += p.total;
-    p.percentual = `${Math.round((acumulado / totalGeral) * 100)}%`;
-    const percentualNum = (acumulado / totalGeral) * 100;
-    if (percentualNum <= 80) p.categoria = "A";
-    else if (percentualNum <= 95) p.categoria = "B";
-    else p.categoria = "C";
-  });
+    function zerarMes() {
+      localStorage.removeItem(comissao-${selectMes.value});
+      carregarMes();
+    }
 
-  lista.forEach(p => {
-    const linha = document.createElement("tr");
-    linha.innerHTML = `
-      <td>${p.nome}</td>
-      <td>R$ ${p.unitario.toFixed(2)}</td>
-      <td>R$ ${(p.unitario * p.unidades).toFixed(2)}</td>
-      <td>${p.unidades}</td>
-      <td>${p.percentual}</td>
-      <td>${p.categoria}</td>
-    `;
-    corpo.appendChild(linha);
-  });
-}
+    function novaLinha(dados = {}) {
+      const tbody = document.querySelector('#comissaoTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="number" step="0.01" value="${dados.fornecedor || ''}" onchange="calcular()"></td>
+        <td><input type="number" step="0.01" value="${dados.cliente || ''}" onchange="calcular()"></td>
+        <td><input type="text" value="${dados.meio || ''}" onchange="calcular()"></td>
+        <td class="lucro">R$ 0,00</td>
+        <td class="comissao">R$ 0,00</td>
+      `;
+      tbody.appendChild(row);
+      calcular();
+    }
 
-function adicionarProduto() {
-  const nome = document.getElementById("produto").value.trim();
-  const unitario = parseFloat(document.getElementById("unitarioProduto").value);
-  const unidades = parseInt(document.getElementById("unidadesProduto").value);
+    function calcular() {
+      const rows = document.querySelectorAll('#comissaoTable tbody tr');
+      let totalComissao = 0;
+      let totalVendas = 0;
 
-  if (!nome || isNaN(unitario) || isNaN(unidades)) {
-    alert("Preencha todos os campos corretamente.");
-    return;
-  }
+      rows.forEach(row => {
+        const fornecedor = parseFloat(row.cells[0].children[0].value) || 0;
+        const cliente = parseFloat(row.cells[1].children[0].value) || 0;
+        const lucro = cliente - fornecedor;
+        const comissao = cliente * 0.05;
 
-  produtos.push({ nome, unitario, unidades });
-  localStorage.setItem("produtosABC", JSON.stringify(produtos));
-  document.getElementById("produto").value = '';
-  document.getElementById("unitarioProduto").value = '';
-  document.getElementById("unidadesProduto").value = '';
-  atualizarTabela();
-}
+        row.cells[3].innerText = R$ ${lucro.toFixed(2)};
+        row.cells[4].innerText = R$ ${comissao.toFixed(2)};
 
-function limparDados() {
-  if (confirm("Deseja apagar todos os produtos salvos?")) {
-    produtos = [];
-    localStorage.removeItem("produtosABC");
-    atualizarTabela();
-  }
-}
+        totalComissao += comissao;
+        totalVendas += cliente;
+      });
 
-window.onload = () => {
-  fetch("https://curva-abc-proxy.onrender.com/api/pedidos")
-    .then(res => res.json())
-    .then(produtosAPI => {
-      if (Array.isArray(produtosAPI) && produtosAPI.length > 0) {
-        produtos = produtosAPI;
-        localStorage.setItem("produtosABC", JSON.stringify(produtos));
-        atualizarTabela();
+      document.getElementById('comissaoTotal').innerText = R$ ${totalComissao.toFixed(2)};
+      document.getElementById('comissaoDividida').innerText = R$ ${(totalComissao / 2).toFixed(2)};
+
+      const bonusInfo = document.getElementById('bonusInfo');
+      const progressBar = document.getElementById('progressBar');
+
+      if (totalVendas >= 100000) {
+        bonusInfo.innerText = Parabéns! Meta de R$ 100.000 alcançada! Cada vendedor recebe um bônus de R$ 500,00.;
+        bonusInfo.style.color = 'green';
       } else {
-        alert("Nenhum dado encontrado na Loja Integrada.");
+        bonusInfo.innerText = Ao bater a meta de R$ 100.000 em vendas, cada vendedor ganha um bônus extra de R$ 500,00! Vamos juntos alcançar esse objetivo!;
+        bonusInfo.style.color = '#333';
       }
-    })
-    .catch(err => {
-      console.error("Erro ao buscar dados da API:", err);
-      alert("Erro ao carregar dados da Loja Integrada.");
-    });
-};
-</script>
+
+      const progresso = Math.min((totalVendas / 100000) * 100, 100);
+      progressBar.style.width = progresso + '%';
+      progressBar.innerText = Math.floor(progresso) + '%';
+
+      salvarMes();
+    }
+
+    carregarMes();
+  </script>
 </body>
 </html>
